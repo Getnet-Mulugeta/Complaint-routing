@@ -1,0 +1,41 @@
+# Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Environment variables
+.env
+
+# Data
+data/
+
+# Model weights
+models/
+*.safetensors
+*.bin
+*.pt
+*.pkl
+*.joblib
+
+# Logs
+logs/
+
+# Tests
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Allow LightGBM priority model files
+!models/
+!models/priority-lgbm/
+!models/priority-lgbm/pipeline.joblib
+!models/priority-lgbm/label_encoder.joblib
