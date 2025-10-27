@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}FinResolve — Financial Complaint Resolution{% endblock %}
+
+{% block extra_styles %}
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.portal-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xl);
+    padding: 36px;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.portal-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold-500), transparent);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.portal-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: var(--gold-300);
+}
+
+.portal-card:hover::after { transform: scaleX(1); }
+
+.portal-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    background: var(--gold-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--gold-600);
+}
+
+.portal-card h3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--navy-900);
+    margin-bottom: 10px;
+}
+
+.portal-card p {
+    font-size: 14px;
+    color: var(--gray-600);
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 48px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+}
+
+.feature-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold-500);
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+.feature-item h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy-900);
+    margin-bottom: 4px;
+}
+
+.feature-item p {
+    font-size: 13px;
+    color: var(--gray-400);
+    line-height: 1.5;
+}
+{% endblock %}
+
+{% block body %}
+<!-- Hero -->
+<div class="fr-hero">
+    <div class="fr-hero-inner">
+        <div class="fr-hero-label">Financial Complaint Resolution Platform</div>
+        <h1>Resolve Your Financial<br>Complaints with Confidence</h1>
+        <p>Our AI-powered system ensures every complaint reaches the right department and receives the attention it deserves — quickly and transparently.</p>
+    </div>
+</div>
+
+<div class="fr-main">
+
+    <!-- Portal Entry Cards -->
+    <div class="hero-grid">
+        <div class="portal-card animate-fade-up delay-1">
+            <div class="portal-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <h3>Returning Users</h3>
+            <p>Already have an account? Sign in to view your submitted complaints, track their progress, and receive updates from our team.</p>
+            <a href="/login" class="btn btn-navy btn-lg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                Sign In
+            </a>
+        </div>
+
+        <div class="portal-card animate-fade-up delay-2">
+            <div class="portal-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+            </div>
+            <h3>New Users</h3>
+            <p>Create a free account to submit your financial complaint. Our system will intelligently route it to the appropriate department for swift resolution.</p>
+            <a href="/customer-registration" class="btn btn-primary btn-lg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Account
+            </a>
+        </div>
+    </div>
+
+    <!-- Feature Strip -->
+    <div class="feature-grid">
+        <div class="feature-item animate-fade-up delay-2">
+            <div class="feature-dot"></div>
+            <div>
+                <h4>AI-Powered Routing</h4>
+                <p>Complaints are automatically analyzed and routed to the correct department using machine learning.</p>
+            </div>
+        </div>
+        <div class="feature-item animate-fade-up delay-3">
+            <div class="feature-dot"></div>
+            <div>
+                <h4>Priority Classification</h4>
+                <p>Every complaint is assigned a priority level — critical, high priority, or standard — ensuring urgent cases are handled first.</p>
+            </div>
+        </div>
+        <div class="feature-item animate-fade-up delay-4">
+            <div class="feature-dot"></div>
+            <div>
+                <h4>Full Transparency</h4>
+                <p>Track your complaint status in real time and receive clear timelines for resolution.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Trigger animations
+    document.querySelectorAll('.animate-fade-up').forEach(el => {
+        el.style.opacity = '0';
+        const delay = parseFloat(getComputedStyle(el).animationDelay) || 0;
+        setTimeout(() => {
+            el.style.animation = 'fadeUp 0.5s ease forwards';
+        }, delay * 1000 + 100);
+    });
+</script>
+{% endblock %}

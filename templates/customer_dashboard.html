@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}My Complaints — FinResolve{% endblock %}
+
+{% block head_scripts %}
+<script>
+    if (!localStorage.getItem('token')) window.location.replace('/login');
+</script>
+{% endblock %}
+
+{% block nav %}
+<a href="/complaint-submission" class="btn btn-primary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Complaint
+</a>
+<button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+{% endblock %}
+
+{% block extra_styles %}
+.dash-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.dash-hero {
+    background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+    color: var(--white);
+    padding: 28px 32px;
+}
+
+.dash-hero-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.dash-hero h1 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.dash-hero p { font-size: 14px; color: rgba(255,255,255,0.6); }
+
+.dash-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.complaint-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+}
+
+.complaint-card:hover {
+    border-color: var(--gold-300);
+    box-shadow: var(--shadow-md);
+}
+
+.complaint-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.complaint-preview {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--navy-900);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.complaint-date {
+    font-size: 12px;
+    color: var(--gray-400);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.complaint-routing {
+    font-size: 13px;
+    color: var(--gray-600);
+    line-height: 1.6;
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin: 10px 0;
+    border-left: 3px solid var(--gold-300);
+}
+
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    color: var(--gray-400);
+}
+
+.empty-state svg { margin-bottom: 16px; opacity: 0.3; }
+.empty-state h3 { font-size: 18px; color: var(--gray-600); margin-bottom: 8px; }
+.empty-state p { font-size: 14px; margin-bottom: 24px; }
+
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 64px;
+    color: var(--gray-400);
+    gap: 12px;
+    font-size: 14px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--gold-500);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+{% endblock %}
+
+{% block body %}
+<div class="dash-layout">
+    <div class="dash-hero">
+        <div class="dash-hero-inner">
+            <div>
+                <h1>My Complaints</h1>
+                <p>Track the status and resolution of your submitted complaints</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-body">
+        <div id="complaintList">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                Loading your complaints…
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = requireAuth();
+
+function getPriorityBadge(priority) {
+    if (!priority) return '';
+    const map = { critical: 'badge-critical', high_priority: 'badge-high', standard: 'badge-standard' };
+    const label = { critical: 'Critical', high_priority: 'High Priority', standard: 'Standard' };
+    return `<span class="badge ${map[priority] || 'badge-navy'}">${label[priority] || priority}</span>`;
+}
+
+async function loadComplaints() {
+    const container = document.getElementById('complaintList');
+    try {
+        const res = await fetch(`${BASE_URL}/my-complaints`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        container.innerHTML = '';
+
+        if (!data.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <h3>No complaints yet</h3>
+                    <p>Submit your first complaint and we'll route it to the right team.</p>
+                    <a href="/complaint-submission" class="btn btn-primary">Submit a Complaint</a>
+                </div>
+            `;
+            return;
+        }
+
+        data.forEach((c, i) => {
+            const card = document.createElement('div');
+            card.className = 'complaint-card';
+            card.style.animationDelay = `${i * 0.05}s`;
+
+            let routingMsg = '';
+            if (c.predicted_department && c.predicted_priority) {
+                const timeline = c.predicted_priority === 'critical' ? '1–2 business days'
+                    : c.predicted_priority === 'high_priority' ? '3–4 business days' : '5–6 business days';
+                routingMsg = `Routed to <strong>${c.predicted_department}</strong> · Expected resolution: <strong>${timeline}</strong>`;
+            } else if (!c.predicted_department) {
+                routingMsg = 'Under manual review — a specialist will route this complaint shortly.';
+            } else {
+                routingMsg = `Routed to <strong>${c.predicted_department}</strong> · Priority level pending review.`;
+            }
+
+            card.innerHTML = `
+                <div class="complaint-card-top">
+                    <div class="complaint-preview">${c.complaint_text.slice(0, 100)}…</div>
+                    <div class="complaint-date">${formatDate(c.created_at)}</div>
+                </div>
+                <div class="badge-row">
+                    ${c.predicted_department ? `<span class="badge badge-navy">${c.predicted_department}</span>` : ''}
+                    ${getPriorityBadge(c.predicted_priority)}
+                </div>
+                <div class="complaint-routing">${routingMsg}</div>
+                <div class="fr-expand-wrap">
+                    <button type="button" class="fr-expand-trigger" aria-expanded="false">
+                        <span class="fr-expand-label">View full complaint</span>
+                        <svg class="fr-expand-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div class="fr-complaint-panel" hidden>
+                        <div class="fr-complaint-detail">
+                            <p class="fr-complaint-body"></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            card.querySelector('.fr-complaint-body').textContent = c.complaint_text;
+            const wrap = card.querySelector('.fr-expand-wrap');
+            card.querySelector('.fr-expand-trigger').addEventListener('click', e => {
+                e.stopPropagation();
+                const isOpen = !card.querySelector('.fr-complaint-panel').hasAttribute('hidden');
+                document.querySelectorAll('.fr-expand-wrap').forEach(w => setComplaintExpanded(w, false));
+                if (!isOpen) setComplaintExpanded(wrap, true);
+            });
+
+            container.appendChild(card);
+        });
+    } catch (err) {
+        container.innerHTML = `<p style="text-align:center;color:var(--critical);padding:32px;">Failed to load complaints. Please refresh.</p>`;
+        console.error(err);
+    }
+}
+
+window.onload = loadComplaints;
+</script>
+{% endblock %}

@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Operator Dashboard — FinResolve{% endblock %}
+
+{% block head_scripts %}
+<script>
+    if (!localStorage.getItem('token')) window.location.replace('/login');
+</script>
+{% endblock %}
+
+{% block nav %}
+<button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+{% endblock %}
+
+{% block extra_styles %}
+.op-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.op-hero {
+    background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+    color: var(--white);
+    padding: 24px 32px;
+}
+
+.op-hero-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.op-hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold-400);
+    margin-bottom: 6px;
+}
+
+.op-hero h1 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.op-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.columns-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.op-column {
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.op-column-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.op-column-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot-critical { background: var(--critical); }
+.dot-high { background: var(--high); }
+.dot-standard { background: var(--standard); }
+
+.op-column-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy-900);
+}
+
+.op-column-count {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
+.op-column-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.op-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+}
+
+.op-card:hover {
+    background: var(--white);
+    border-color: var(--gold-300);
+    box-shadow: var(--shadow-sm);
+}
+
+.op-card-preview {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy-900);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.op-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.customer-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy-700);
+}
+
+.customer-id {
+    font-size: 11px;
+    background: var(--navy-100);
+    color: var(--navy-700);
+    padding: 2px 7px;
+    border-radius: 100px;
+    font-weight: 500;
+}
+
+.op-card-date {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+}
+
+.confidence-mini {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.conf-item {
+    flex: 1;
+}
+
+.conf-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-400);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.conf-bar-bg {
+    height: 3px;
+    background: var(--gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.conf-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--navy-700), var(--gold-500));
+}
+
+.conf-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--navy-700);
+}
+{% endblock %}
+
+{% block body %}
+<div class="op-layout">
+    <div class="op-hero">
+        <div class="op-hero-inner">
+            <div class="op-hero-label">Operator Panel</div>
+            <h1 id="deptTitle">Loading department…</h1>
+        </div>
+    </div>
+
+    <div class="op-body">
+        <div class="columns-wrap">
+            <div class="op-column">
+                <div class="op-column-header">
+                    <div class="op-column-dot dot-critical"></div>
+                    <span class="op-column-title">Critical</span>
+                    <span class="op-column-count" id="critCount">0</span>
+                </div>
+                <div class="op-column-body" id="critCol"></div>
+            </div>
+            <div class="op-column">
+                <div class="op-column-header">
+                    <div class="op-column-dot dot-high"></div>
+                    <span class="op-column-title">High Priority</span>
+                    <span class="op-column-count" id="highCount">0</span>
+                </div>
+                <div class="op-column-body" id="highCol"></div>
+            </div>
+            <div class="op-column">
+                <div class="op-column-header">
+                    <div class="op-column-dot dot-standard"></div>
+                    <span class="op-column-title">Standard</span>
+                    <span class="op-column-count" id="stdCount">0</span>
+                </div>
+                <div class="op-column-body" id="stdCol"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = requireAuth();
+
+function getCol(priority) {
+    if (priority === 'critical') return 'critCol';
+    if (priority === 'high_priority') return 'highCol';
+    return 'stdCol';
+}
+
+function getCount(priority) {
+    if (priority === 'critical') return 'critCount';
+    if (priority === 'high_priority') return 'highCount';
+    return 'stdCount';
+}
+
+async function load() {
+    const res = await fetch(`${BASE_URL}/operator-complaints`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const result = await res.json();
+
+    document.getElementById('deptTitle').textContent = result.department + ' Department';
+
+    const counts = { critCol: 0, highCol: 0, stdCol: 0 };
+
+    result.complaints.forEach((c, i) => {
+        const colId = getCol(c.predicted_priority);
+        counts[colId]++;
+
+        const col = document.getElementById(colId);
+        const card = document.createElement('div');
+        card.className = 'op-card';
+        card.style.animationDelay = `${i * 0.04}s`;
+
+        const dConf = (c.department_confidence_score * 100).toFixed(0);
+        const pConf = (c.priority_confidence_score * 100).toFixed(0);
+
+        card.innerHTML = `
+            <div class="op-card-preview">${c.complaint_text.slice(0, 80)}…</div>
+            <div class="op-card-meta">
+                <span class="customer-name">${c.customer_name}</span>
+                <span class="customer-id">#${c.user_id}</span>
+            </div>
+            <div class="op-card-date">${formatDate(c.created_at)}</div>
+            <div class="confidence-mini">
+                <div class="conf-item">
+                    <div class="conf-label">Routing</div>
+                    <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${dConf}%"></div></div>
+                    <div class="conf-value">${dConf}%</div>
+                </div>
+                <div class="conf-item">
+                    <div class="conf-label">Priority</div>
+                    <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${pConf}%"></div></div>
+                    <div class="conf-value">${pConf}%</div>
+                </div>
+            </div>
+            <div class="fr-expand-wrap">
+                <button type="button" class="fr-expand-trigger" aria-expanded="false">
+                    <span class="fr-expand-label">View full complaint</span>
+                    <svg class="fr-expand-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="fr-complaint-panel" hidden>
+                    <div class="fr-complaint-detail">
+                        <p class="fr-complaint-body"></p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        card.querySelector('.fr-complaint-body').textContent = c.complaint_text;
+        const wrap = card.querySelector('.fr-expand-wrap');
+        card.querySelector('.fr-expand-trigger').addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = !wrap.querySelector('.fr-complaint-panel').hasAttribute('hidden');
+            document.querySelectorAll('.fr-expand-wrap').forEach(w => setComplaintExpanded(w, false));
+            if (!isOpen) setComplaintExpanded(wrap, true);
+        });
+
+        col.appendChild(card);
+    });
+
+    document.getElementById('critCount').textContent = counts.critCol;
+    document.getElementById('highCount').textContent = counts.highCol;
+    document.getElementById('stdCount').textContent = counts.stdCol;
+}
+
+window.onload = load;
+</script>
+{% endblock %}

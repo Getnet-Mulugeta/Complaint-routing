@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Complaint — FinResolve{% endblock %}
+
+{% block head_scripts %}
+<script>
+    if (!localStorage.getItem('token')) window.location.replace('/login');
+</script>
+{% endblock %}
+
+{% block nav %}
+<button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+{% endblock %}
+
+{% block extra_styles %}
+.submission-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px;
+    background: var(--gray-50);
+}
+
+.submission-box {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xl);
+    padding: 48px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: var(--shadow-lg);
+    animation: fadeUp 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.submission-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--navy-900), var(--gold-500), var(--navy-900));
+}
+
+.submission-header { margin-bottom: 32px; }
+.submission-header h2 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--navy-900);
+    margin-bottom: 8px;
+}
+.submission-header p { font-size: 14px; color: var(--gray-400); line-height: 1.6; }
+
+.char-count {
+    font-size: 12px;
+    color: var(--gray-400);
+    text-align: right;
+    margin-top: 6px;
+}
+
+.tip-box {
+    background: var(--navy-50);
+    border: 1px solid var(--navy-100);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--navy-700);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.tip-box strong { color: var(--navy-900); }
+
+.result-box {
+    text-align: center;
+    padding: 16px 0;
+}
+
+.result-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--gold-100);
+    color: var(--gold-600);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.result-box h3 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--navy-900);
+    margin-bottom: 16px;
+}
+
+.result-detail {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: left;
+    font-size: 14px;
+    color: var(--gray-600);
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.result-detail strong { color: var(--navy-900); }
+{% endblock %}
+
+{% block body %}
+<div class="submission-wrapper">
+    <div class="submission-box" id="mainBox">
+        <div class="submission-header">
+            <h2>Submit a Complaint</h2>
+            <p>Describe your issue clearly and in detail. Our AI system will analyze it and route it to the appropriate department.</p>
+        </div>
+
+        <div class="tip-box">
+            <strong>Tip:</strong> Include specific details such as account numbers, dates, amounts, and the actions you've already taken. More detail leads to faster resolution.
+        </div>
+
+        <form id="complaintForm" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="form-group">
+                <label class="form-label">Your Complaint</label>
+                <textarea id="complaint" class="form-input" placeholder="Describe your financial complaint in detail…" required maxlength="5000"></textarea>
+                <div class="char-count"><span id="charCount">0</span> / 5000</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+                Submit Complaint
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="fr-modal-backdrop" id="confirmModal">
+    <div class="fr-modal">
+        <h3>Confirm Submission</h3>
+        <p>Are you sure you want to submit this complaint? Once submitted, it will be reviewed and routed by our AI system.</p>
+        <div class="fr-modal-actions">
+            <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+            <button class="btn btn-navy" id="confirmBtn">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = requireAuth();
+
+// Char counter
+document.getElementById('complaint').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+});
+
+// Show modal on submit
+document.getElementById('complaintForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    document.getElementById('confirmModal').classList.add('active');
+});
+
+document.getElementById('cancelBtn').addEventListener('click', () => {
+    document.getElementById('confirmModal').classList.remove('active');
+});
+
+document.getElementById('confirmBtn').addEventListener('click', async () => {
+    document.getElementById('confirmModal').classList.remove('active');
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Submitting…';
+    btn.disabled = true;
+
+    const complaintText = document.getElementById('complaint').value;
+
+    try {
+        const res = await fetch(`${BASE_URL}/submit-complaint`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ complaint_text: complaintText })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            function getTimeline(priority) {
+                if (priority === 'critical') return '1–2 business days';
+                if (priority === 'high_priority') return '3–4 business days';
+                return '5–6 business days';
+            }
+
+            function getPriorityBadge(priority) {
+                if (!priority) return '';
+                const map = {
+                    critical: 'badge-critical',
+                    high_priority: 'badge-high',
+                    standard: 'badge-standard'
+                };
+                const label = {
+                    critical: 'Critical',
+                    high_priority: 'High Priority',
+                    standard: 'Standard'
+                };
+                return `<span class="badge ${map[priority] || 'badge-navy'}">${label[priority] || priority}</span>`;
+            }
+
+            let detailHtml = '';
+            if (data.department && data.priority) {
+                detailHtml = `
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                        <span class="badge badge-navy">${data.department}</span>
+                        ${getPriorityBadge(data.priority)}
+                    </div>
+                    Your complaint has been routed to the <strong>${data.department}</strong> department with <strong>${data.priority.replace('_', ' ')}</strong> priority.
+                    Expected resolution: <strong>${getTimeline(data.priority)}</strong>.
+                `;
+            } else if (!data.department) {
+                detailHtml = `Your complaint is under review. A specialist will determine the appropriate department before routing it for resolution.`;
+            } else {
+                detailHtml = `Your complaint has been routed to the <strong>${data.department}</strong> team. A reviewer will assign the priority level shortly.`;
+            }
+
+            document.getElementById('mainBox').innerHTML = `
+                <div class="result-box">
+                    <div class="result-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <h3>Complaint Submitted</h3>
+                    <div class="result-detail">${detailHtml}</div>
+                    <p class="text-muted">Redirecting to your dashboard…</p>
+                </div>
+            `;
+            setTimeout(() => window.location.href = '/customer-dashboard', 3000);
+        } else {
+            alert(data.detail || 'An error occurred.');
+            btn.textContent = 'Submit Complaint';
+            btn.disabled = false;
+        }
+    } catch {
+        alert('Unable to connect. Please try again.');
+        btn.textContent = 'Submit Complaint';
+        btn.disabled = false;
+    }
+});
+</script>
+{% endblock %}
