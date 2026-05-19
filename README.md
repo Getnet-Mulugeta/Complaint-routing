@@ -12,26 +12,6 @@ FinResolve is an end-to-end machine learning platform built on top of the Consum
 
 The platform serves three distinct user roles: customers who submit complaints, department operators who manage their queues, and reviewers who handle low-confidence edge cases that require human judgment.
 
----
-
-## Academic Context
-
-| | |
-|---|---|
-| **Institution** | George Washington University |
-| **Course** | Applied Machine Learning for Analytics — EMSE 6575 |
-| **Instructor** | Prof. Maksim Tsvetovat |
-| **Term** | Spring 2026 |
-
-**Team**
-
-Michael M. Demissie, Blessing, Andy Gomez, Tony, Chidochashe, Tino, Ncee
-
----
-
-## System Architecture
-
-```
 User Complaint (free text)
         │
         ▼
